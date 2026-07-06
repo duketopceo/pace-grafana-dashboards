@@ -1,0 +1,43 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "title": "Error Count by Service (Loki)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(count_over_time({container_name=~\"pace-strut|pace-relay|pace-agents\"} |= \"error\" [5m])) by (container_name)", "legendFormat": "{{container_name}}" }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    },
+    {
+      "title": "Failed Targets",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "up == 0", "legendFormat": "{{job}}" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "mappings": [{ "options": { "0": { "color": "green", "text": "OK" } }, "type": "value" }], "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "title": "Consolidated Service Errors",
+      "type": "logs",
+      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "{container_name=~\"pace-strut|pace-relay|pace-agents|pace-redis\"} |= \"error\" or \"ERROR\" or \"panic\"", "refId": "A" }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["errors", "logs"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Pace — Error Overview",
+  "uid": "pace-error-overview"
+}

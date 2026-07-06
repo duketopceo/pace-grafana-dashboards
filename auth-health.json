@@ -1,0 +1,142 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Auth Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(relay_auth_requests_total[5m])) by (issuer, status)",
+          "legendFormat": "relay {{issuer}} {{status}}"
+        },
+        {
+          "expr": "sum(rate(strut_auth_requests_total[5m])) by (issuer, status)",
+          "legendFormat": "strut {{issuer}} {{status}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Auth Failure Rate by Reason",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(relay_auth_failures_total[5m])) by (reason)",
+          "legendFormat": "relay {{reason}}"
+        },
+        {
+          "expr": "sum(rate(strut_auth_failures_total[5m])) by (reason)",
+          "legendFormat": "strut {{reason}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Auth Failures (Instant)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(relay_auth_failures_total) by (reason)",
+          "legendFormat": "{{reason}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 10 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Active Sessions by Issuer",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(relay_auth_requests_total{status=\"success\"}) by (issuer)",
+          "legendFormat": "{{issuer}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Recent Auth Errors (Loki)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "{container_name=~\"pace-relay|pace-strut\"} |= \"auth\" |= \"failed\"",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    },
+    {
+      "title": "JWKS Fallback Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum(rate(relay_auth_requests_total{status=\"fallback\"}[5m])) by (issuer)",
+          "legendFormat": "relay fallback {{issuer}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Auth Success vs Failure Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum(rate(relay_auth_requests_total{status=\"success\"}[5m]))",
+          "legendFormat": "relay success"
+        },
+        {
+          "expr": "sum(rate(relay_auth_failures_total[5m]))",
+          "legendFormat": "relay failures"
+        },
+        {
+          "expr": "sum(rate(strut_auth_requests_total{status=\"success\"}[5m]))",
+          "legendFormat": "strut success"
+        },
+        {
+          "expr": "sum(rate(strut_auth_failures_total[5m]))",
+          "legendFormat": "strut failures"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["pace", "auth"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Pace — Auth Health",
+  "uid": "pace-auth-health"
+}

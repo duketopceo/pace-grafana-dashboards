@@ -1,0 +1,53 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Agent Execution Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(pace_agent_executions_total[5m])) by (task_type, status)", "legendFormat": "{{task_type}} {{status}}" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Agent Failure + Escalation Rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(pace_agent_executions_total{status=~\"failed|escalated\"}[5m])) / sum(rate(pace_agent_executions_total[5m])) or vector(0)", "legendFormat": "failure %" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 0.05 }] } } }
+    },
+    {
+      "title": "Executions by Status",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "sum(pace_agent_executions_total) by (status)", "legendFormat": "{{status}}" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Sidecar Logs",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "{container_name=\"pace-agents\"} |= \"error\" or \"ERROR\" or \"escalated\"", "refId": "A" }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["pace", "agents"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Pace — Agent Execution",
+  "uid": "pace-agent-execution"
+}

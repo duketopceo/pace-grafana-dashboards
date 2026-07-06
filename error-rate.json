@@ -1,0 +1,52 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "5xx Rate by Tenant",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(pace_http_requests_total{status=~\"5..\"}[5m])) by (tenant_id)", "legendFormat": "{{tenant_id}}" }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Error Spike (Loki)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "{status=~\"5..\"} | logfmt | status >= 500", "refId": "A" }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    },
+    {
+      "title": "Agent Failures by Task Type",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "topk(10, sum(pace_agent_executions_total{status=~\"failed|escalated\"}) by (task_type))", "format": "table", "instant": true }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Recent Sentry Events",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "{container_name=~\"pace-strut|pace-relay\"} | logfmt | level >= \"error\"", "refId": "A" }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["pace", "errors"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "Pace — Error Rate",
+  "uid": "pace-error-rate"
+}

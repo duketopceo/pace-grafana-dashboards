@@ -1,0 +1,181 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "title": "Agent playbook",
+      "type": "link",
+      "url": "https://github.com/duketopceo/Pace-Server/blob/main/docs/AGENT_DIAGNOSTICS.md",
+      "targetBlank": true
+    },
+    {
+      "title": "Auth Health (detail)",
+      "type": "dashboard",
+      "uid": "pace-auth-health"
+    }
+  ],
+  "panels": [
+    {
+      "title": "Agent quick read",
+      "type": "text",
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "## Pace — Onboarding & Auth (for agents)\n\n| Symptom | First check | GlitchTip event |\n|---|---|---|\n| Login 404 / Stytch init fails | CF Pages `VITE_STYTCH_PUBLIC_TOKEN` | `login.stytch_token_invalid` |\n| Post-login loop | JWT missing `tenant_id` | `auth.post_auth_route`, `auth.session_missing_tenant_id` |\n| Checkout won't start | Railway `STRIPE_SECRET_KEY` + price IDs | `onboarding.checkout.failed`, `platform.diagnostics_blocker` |\n| Paid but no entitlements | Stripe webhook → `relay.pacehq.io` | `onboarding.blocked` |\n\n**In-app:** Settings → Platform diagnostics (verdict + `agentHint` per row).\n\n**Docs:** `docs/AGENT_DIAGNOSTICS.md`"
+      }
+    },
+    {
+      "title": "Checkout attempts (rate)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "targets": [
+        {
+          "expr": "sum(rate(strut_billing_checkout_total[5m])) by (outcome)",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        }
+      }
+    },
+    {
+      "title": "Checkout failures by plan",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "targets": [
+        {
+          "expr": "sum(rate(strut_billing_checkout_total{outcome!=\"success\"}[5m])) by (plan, outcome)",
+          "legendFormat": "{{plan}} — {{outcome}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Checkout outcomes (instant)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "expr": "sum(strut_billing_checkout_total) by (outcome)",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Auth failure rate",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 13 },
+      "targets": [
+        {
+          "expr": "sum(rate(strut_auth_failures_total[5m]))",
+          "legendFormat": "strut failures/s"
+        },
+        {
+          "expr": "sum(rate(relay_auth_failures_total[5m]))",
+          "legendFormat": "relay failures/s"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Post-auth routing (GlitchTip proxy)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 13 },
+      "description": "Search GlitchTip/Sentry for event auth.post_auth_route — not in Prometheus",
+      "options": {
+        "textMode": "name"
+      },
+      "targets": [
+        {
+          "expr": "vector(0)",
+          "legendFormat": "Use GlitchTip: auth.post_auth_route"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    },
+    {
+      "title": "Onboarding logs (Loki)",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 17 },
+      "targets": [
+        {
+          "expr": "{container_name=~\"pace-strut|pace-relay\"} |= \"onboarding\"",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    },
+    {
+      "title": "Billing / Stripe logs (Loki)",
+      "type": "logs",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 17 },
+      "targets": [
+        {
+          "expr": "{container_name=~\"pace-strut|pace-relay\"} |~ \"billing|stripe|checkout\"",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    },
+    {
+      "title": "Auth errors (Loki)",
+      "type": "logs",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 27 },
+      "targets": [
+        {
+          "expr": "{container_name=~\"pace-relay|pace-strut\"} |= \"auth\" |= \"failed\"",
+          "refId": "A"
+        }
+      ],
+      "datasource": { "type": "loki", "uid": "loki" }
+    },
+    {
+      "title": "Auth success vs failure",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 35 },
+      "targets": [
+        {
+          "expr": "sum(rate(strut_auth_requests_total{status=\"success\"}[5m]))",
+          "legendFormat": "strut success"
+        },
+        {
+          "expr": "sum(rate(strut_auth_failures_total[5m]))",
+          "legendFormat": "strut failures"
+        },
+        {
+          "expr": "sum(rate(relay_auth_requests_total{status=\"success\"}[5m]))",
+          "legendFormat": "relay success"
+        },
+        {
+          "expr": "sum(rate(relay_auth_failures_total[5m]))",
+          "legendFormat": "relay failures"
+        }
+      ],
+      "datasource": { "type": "prometheus", "uid": "prometheus" }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["pace", "onboarding", "auth", "billing"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Pace — Onboarding & Auth",
+  "uid": "pace-onboarding-auth-billing"
+}
